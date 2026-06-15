@@ -13,6 +13,8 @@ catalog:
   vite-plus: latest
   three: ^0.184.0
   "@types/three": ^0.184.1
+  "@tanstack/ai": ^0.28.0
+  "@tanstack/ai-gemini": ^0.15.1
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
@@ -24,6 +26,8 @@ peerDependencyRules:
     vite: "*"
     vitest: "*"
 allowBuilds:
+  "@google/genai": true
   esbuild: true
+  protobufjs: true
   sharp: true
   workerd: true

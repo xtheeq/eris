@@ -10,6 +10,8 @@
     "check": "vp check"
   },
   "dependencies": {
+    "@tanstack/ai": "catalog:",
+    "@tanstack/ai-gemini": "catalog:",
     "hono": "^4.12.25"
   },
   "devDependencies": {
