@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export async function generate(message: string): Promise<string> {
-  const res = await fetch(`${BASE}/generate`, {
+  const res = await fetch(`${BASE}/agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
