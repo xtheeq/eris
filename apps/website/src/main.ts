@@ -1,3 +1,4 @@
+import "./style.css";
 import { tick } from "./store.ts";
 import { renderer, scene, camera, timer } from "./scene.ts";
 import { generate } from "./api.ts";
