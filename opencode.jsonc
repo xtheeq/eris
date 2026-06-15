@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "references": {
+    "three": {
+      "repository": "mrdoob/three.js",
+      "description": "Use for Three.js API reference, geometries, materials, lights, and WebGPU renderer details",
+    },
+    "tanstack-ai": {
+      "repository": "TanStack/ai",
+      "description": "Use for TanStack AI SDK types, provider adapters, streaming chat, tool calling, and agent loop patterns",
+    },
+    "hono": {
+      "repository": "honojs/hono",
+      "description": "Use for Hono web framework API, middleware patterns, routing, and multi-runtime setup",
+    },
+  },
+}
