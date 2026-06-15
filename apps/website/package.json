@@ -8,7 +8,11 @@
     "build": "tsc && vp build",
     "preview": "vp preview"
   },
+  "dependencies": {
+    "three": "catalog:"
+  },
   "devDependencies": {
+    "@types/three": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"

@@ -1,60 +1,93 @@
-import "./style.css";
-import typescriptLogo from "./assets/typescript.svg";
-import viteLogo from "./assets/vite.svg";
-import heroImg from "./assets/hero.png";
-import { setupCounter } from "./counter.ts";
+import * as THREE from "three/webgpu";
 
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${typescriptLogo}" class="framework" alt="TypeScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.ts</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+type UpdateFn = (delta: number, elapsed: number) => void;
 
-<div class="ticks"></div>
+type Entity = {
+  object: THREE.Object3D;
+  onUpdate?: UpdateFn;
+};
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://www.typescriptlang.org" target="_blank">
-          <img class="button-icon" src="${typescriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+const scene = new THREE.Scene();
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`;
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
 
-setupCounter(document.querySelector<HTMLButtonElement>("#counter")!);
+const renderer = new THREE.WebGPURenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const app = document.getElementById("app");
+if (!app) throw new Error("#app element not found");
+app.appendChild(renderer.domElement);
+
+const timer = new THREE.Timer();
+timer.connect(document);
+
+const entities = new Map<string, Entity>();
+
+const SceneAPI = {
+  THREE,
+  scene,
+  camera,
+  add(id: string, object: THREE.Object3D, onUpdate?: UpdateFn): void {
+    this.remove(id);
+    scene.add(object);
+    entities.set(id, { object, onUpdate });
+  },
+  remove(id: string): void {
+    const entity = entities.get(id);
+    if (!entity) return;
+    scene.remove(entity.object);
+    entities.delete(id);
+  },
+  get(id: string): THREE.Object3D | undefined {
+    return entities.get(id)?.object;
+  },
+  clear(): void {
+    for (const id of entities.keys()) this.remove(id);
+  },
+  list(): string[] {
+    return [...entities.keys()];
+  },
+  dispose(id: string): void {
+    const entity = entities.get(id);
+    if (!entity) return;
+    const obj = entity.object;
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry?.dispose();
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach((m) => m.dispose());
+      } else {
+        (obj.material as THREE.Material)?.dispose();
+      }
+    }
+    this.remove(id);
+  },
+  _tick(delta: number, elapsed: number): void {
+    for (const { onUpdate } of entities.values()) {
+      onUpdate?.(delta, elapsed);
+    }
+  },
+};
+
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+export async function runLLMCode(code: string): Promise<void> {
+  try {
+    const executeLLM = new AsyncFunction("SceneAPI", "THREE", `"use strict";\n${code}`);
+
+    await executeLLM(SceneAPI, THREE);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[SceneAPI] Execution failed: ${message}`);
+  }
+}
+
+void renderer.setAnimationLoop((timestamp: number) => {
+  timer.update(timestamp);
+  const delta = timer.getDelta();
+  const elapsed = timer.getElapsed();
+
+  SceneAPI._tick(delta, elapsed);
+  renderer.render(scene, camera);
+});

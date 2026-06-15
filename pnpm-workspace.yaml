@@ -11,6 +11,8 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
   vite-plus: latest
+  three: ^0.184.0
+  "@types/three": ^0.184.1
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
