@@ -3,7 +3,7 @@ import { chat } from "@tanstack/ai";
 import { createGeminiChat } from "@tanstack/ai-gemini";
 import { system } from "../prompts/system.ts";
 
-export const agent = new Hono();
+export const agent = new Hono<{ Bindings: CloudflareBindings }>();
 
 agent.post("/agent", async (c) => {
   let body: { message?: string };
@@ -13,10 +13,7 @@ agent.post("/agent", async (c) => {
     return c.json({ error: "invalid JSON" }, 400);
   }
 
-  const adapter = createGeminiChat(
-    "gemini-2.5-flash",
-    (c.env as { GEMINI_API_KEY: string }).GEMINI_API_KEY,
-  );
+  const adapter = createGeminiChat("gemini-2.5-flash", c.env.GEMINI_API_KEY);
 
   try {
     const stream = chat({
