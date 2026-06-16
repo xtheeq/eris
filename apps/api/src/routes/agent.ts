@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { chat } from "@tanstack/ai";
-import { createGeminiChat } from "@tanstack/ai-gemini";
+import { createOpenRouterText } from "@tanstack/ai-openrouter";
 import { system } from "../prompts/system.ts";
 
 export const agent = new Hono<{ Bindings: CloudflareBindings }>();
@@ -13,7 +13,7 @@ agent.post("/agent", async (c) => {
     return c.json({ error: "invalid JSON" }, 400);
   }
 
-  const adapter = createGeminiChat("gemini-2.5-flash", c.env.GEMINI_API_KEY);
+  const adapter = createOpenRouterText("openai/gpt-oss-20b:free", c.env.OPENROUTER_API_KEY);
 
   try {
     const stream = chat({
@@ -27,7 +27,7 @@ agent.post("/agent", async (c) => {
       if (chunk.type === "TEXT_MESSAGE_CONTENT" && chunk.delta) {
         code += chunk.delta;
       } else if (chunk.type === "RUN_ERROR") {
-        console.error("Gemini error:", chunk.message);
+        console.error("AI error:", chunk.message);
         return c.json({ error: chunk.message ?? "AI generation failed" }, 502);
       }
     }
