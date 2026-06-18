@@ -32,9 +32,6 @@ export async function* generate(message: string): AsyncGenerator<string> {
       if (chunk.type === "RUN_ERROR") {
         throw new Error(chunk.message ?? "AI generation failed");
       }
-      if (chunk.type === "RUN_FINISHED") {
-        return;
-      }
     }
   }
 }

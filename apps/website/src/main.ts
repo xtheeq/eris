@@ -28,5 +28,5 @@ document.getElementById("form")!.addEventListener("submit", async (e) => {
     console.error(`[generate] ${msg}`);
     return;
   }
-  if (code.trim()) await run(code);
+  await run(code);
 });
