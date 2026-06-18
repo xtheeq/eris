@@ -25,11 +25,14 @@ export async function* generate(message: string): AsyncGenerator<string> {
       if (!line.startsWith("data: ")) continue;
       const data = line.slice(6);
       const chunk = JSON.parse(data);
-      if (chunk.type === "TEXT_MESSAGE_CONTENT" && chunk.delta) {
-        yield chunk.delta;
-      } else if (chunk.type === "RUN_ERROR") {
+      if (chunk.type === "CUSTOM" && chunk.name === "structured-output.complete") {
+        yield chunk.value.object.code;
+        return;
+      }
+      if (chunk.type === "RUN_ERROR") {
         throw new Error(chunk.message ?? "AI generation failed");
-      } else if (chunk.type === "RUN_FINISHED") {
+      }
+      if (chunk.type === "RUN_FINISHED") {
         return;
       }
     }

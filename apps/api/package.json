@@ -12,7 +12,8 @@
   "dependencies": {
     "@tanstack/ai": "catalog:",
     "@tanstack/ai-openrouter": "catalog:",
-    "hono": "^4.12.25"
+    "hono": "^4.12.25",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:",

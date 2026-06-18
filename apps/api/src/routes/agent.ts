@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { chat, toServerSentEventsResponse } from "@tanstack/ai";
 import { createOpenRouterText } from "@tanstack/ai-openrouter";
 import { system } from "../prompts/system.ts";
@@ -21,7 +22,9 @@ agent.post("/agent", async (c) => {
     adapter,
     messages: [{ role: "user", content: body.message ?? "" }],
     systemPrompts: [system],
+    outputSchema: z.object({ code: z.string() }),
     abortController,
+    stream: true,
   });
 
   return toServerSentEventsResponse(stream, { abortController });

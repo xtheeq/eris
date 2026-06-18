@@ -28,10 +28,5 @@ document.getElementById("form")!.addEventListener("submit", async (e) => {
     console.error(`[generate] ${msg}`);
     return;
   }
-  code = code
-    .trim()
-    .replace(/^```\w*\n?/, "")
-    .replace(/\n?```$/, "")
-    .trim();
-  if (code) await run(code);
+  if (code.trim()) await run(code);
 });
