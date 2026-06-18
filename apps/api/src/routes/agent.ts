@@ -13,7 +13,7 @@ agent.post("/agent", async (c) => {
     return c.json({ error: "invalid JSON" }, 400);
   }
 
-  const adapter = createOpenRouterText("openai/gpt-oss-20b:free", c.env.OPENROUTER_API_KEY);
+  const adapter = createOpenRouterText("openai/gpt-oss-120b:free", c.env.OPENROUTER_API_KEY);
 
   const abortController = new AbortController();
 
