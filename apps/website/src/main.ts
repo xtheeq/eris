@@ -18,5 +18,20 @@ document.getElementById("form")!.addEventListener("submit", async (e) => {
   const text = input.value.trim();
   if (!text) return;
   input.value = "";
-  await run(await generate(text));
+  let code = "";
+  try {
+    for await (const delta of generate(text)) {
+      code += delta;
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[generate] ${msg}`);
+    return;
+  }
+  code = code
+    .trim()
+    .replace(/^```\w*\n?/, "")
+    .replace(/\n?```$/, "")
+    .trim();
+  if (code) await run(code);
 });

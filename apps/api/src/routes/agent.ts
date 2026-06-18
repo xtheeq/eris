@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { chat } from "@tanstack/ai";
+import { chat, toServerSentEventsResponse } from "@tanstack/ai";
 import { createOpenRouterText } from "@tanstack/ai-openrouter";
 import { system } from "../prompts/system.ts";
 
@@ -15,33 +15,14 @@ agent.post("/agent", async (c) => {
 
   const adapter = createOpenRouterText("openai/gpt-oss-20b:free", c.env.OPENROUTER_API_KEY);
 
-  try {
-    const stream = chat({
-      adapter,
-      messages: [{ role: "user", content: body.message ?? "" }],
-      systemPrompts: [system],
-    });
+  const abortController = new AbortController();
 
-    let code = "";
-    for await (const chunk of stream) {
-      if (chunk.type === "TEXT_MESSAGE_CONTENT" && chunk.delta) {
-        code += chunk.delta;
-      } else if (chunk.type === "RUN_ERROR") {
-        console.error("AI error:", chunk.message);
-        return c.json({ error: chunk.message ?? "AI generation failed" }, 502);
-      }
-    }
+  const stream = chat({
+    adapter,
+    messages: [{ role: "user", content: body.message ?? "" }],
+    systemPrompts: [system],
+    abortController,
+  });
 
-    code = code
-      .trim()
-      .replace(/^```\w*\n?/, "")
-      .replace(/\n?```$/, "")
-      .trim();
-
-    return c.json({ code });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("chat stream error:", message);
-    return c.json({ error: "AI generation failed" }, 502);
-  }
+  return toServerSentEventsResponse(stream, { abortController });
 });
