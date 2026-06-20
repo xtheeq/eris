@@ -1,8 +1,12 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { chat, chatParamsFromRequest, toServerSentEventsResponse } from "@tanstack/ai";
-import type { ChatMiddleware } from "@tanstack/ai";
-import { createOpenRouterText } from "@tanstack/ai-openrouter";
+import {
+  chat,
+  chatParamsFromRequest,
+  toServerSentEventsResponse,
+  type ChatMiddleware,
+} from "@tanstack/ai";
+import { createGeminiChat } from "@tanstack/ai-gemini";
 import { system } from "../prompts/system.ts";
 
 const logger: ChatMiddleware = {
@@ -40,12 +44,16 @@ agent.post("/agent", async (c) => {
     throw err;
   }
 
-  const adapter = createOpenRouterText("openai/gpt-oss-120b:free", c.env.OPENROUTER_API_KEY);
+  const adapter = createGeminiChat("gemini-3.1-flash-lite", c.env.GEMINI_API_KEY);
   const abortController = new AbortController();
+
+  c.req.raw.signal.addEventListener("abort", () => abortController.abort(), { once: true });
 
   const stream = chat({
     adapter,
     messages: params.messages,
+    threadId: params.threadId,
+    runId: params.runId,
     systemPrompts: [system],
     outputSchema: z.object({ code: z.string() }),
     middleware: [logger],
