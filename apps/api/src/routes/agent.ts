@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { chat, toServerSentEventsResponse } from "@tanstack/ai";
+import { chat, chatParamsFromRequest, toServerSentEventsResponse } from "@tanstack/ai";
 import type { ChatMiddleware } from "@tanstack/ai";
 import { createOpenRouterText } from "@tanstack/ai-openrouter";
 import { system } from "../prompts/system.ts";
@@ -32,20 +32,20 @@ const logger: ChatMiddleware = {
 export const agent = new Hono<{ Bindings: CloudflareBindings }>();
 
 agent.post("/agent", async (c) => {
-  let body: { message?: string };
+  let params;
   try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "invalid JSON" }, 400);
+    params = await chatParamsFromRequest(c.req.raw);
+  } catch (err) {
+    if (err instanceof Response) return c.json({ error: "invalid AG-UI body" }, 400);
+    throw err;
   }
 
   const adapter = createOpenRouterText("openai/gpt-oss-120b:free", c.env.OPENROUTER_API_KEY);
-
   const abortController = new AbortController();
 
   const stream = chat({
     adapter,
-    messages: [{ role: "user", content: body.message ?? "" }],
+    messages: params.messages,
     systemPrompts: [system],
     outputSchema: z.object({ code: z.string() }),
     middleware: [logger],

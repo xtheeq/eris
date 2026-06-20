@@ -1,40 +1,23 @@
+import { fetchServerSentEvents } from "@tanstack/ai-client";
+import type { UIMessage } from "@tanstack/ai-client";
+
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export async function* generate(message: string, signal?: AbortSignal) {
-  const res = await fetch(`${BASE}/agent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
-    signal,
-  });
-  if (!res.ok) throw new Error(await res.text());
-  if (!res.body) throw new Error("Response has no body");
+  const { connect } = fetchServerSentEvents(`${BASE}/agent`, { signal });
+  const msg: UIMessage = {
+    id: crypto.randomUUID(),
+    role: "user",
+    parts: [{ type: "text", content: message }],
+  };
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const data = line.slice(6);
-        const chunk = JSON.parse(data);
-        if (chunk.type === "CUSTOM" && chunk.name === "structured-output.complete") {
-          yield chunk.value.object.code;
-          return;
-        }
-        if (chunk.type === "RUN_ERROR") {
-          throw new Error(chunk.message ?? "AI generation failed");
-        }
-      }
+  for await (const chunk of connect([msg], {})) {
+    if (chunk.type === "CUSTOM" && chunk.name === "structured-output.complete") {
+      yield chunk.value.object.code;
+      return;
     }
-  } finally {
-    reader.releaseLock();
+    if (chunk.type === "RUN_ERROR") {
+      throw new Error(chunk.message ?? "AI generation failed");
+    }
   }
 }

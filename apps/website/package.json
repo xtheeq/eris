@@ -9,6 +9,7 @@
     "preview": "vp preview"
   },
   "dependencies": {
+    "@tanstack/ai-client": "catalog:",
     "three": "catalog:"
   },
   "devDependencies": {
