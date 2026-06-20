@@ -4,7 +4,7 @@ import type { UIMessage } from "@tanstack/ai-client";
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export async function* generate(message: string, signal?: AbortSignal) {
-  const { connect } = fetchServerSentEvents(`${BASE}/agent`, { signal });
+  const { connect } = fetchServerSentEvents(`${BASE}/agent`);
   const msg: UIMessage = {
     id: crypto.randomUUID(),
     role: "user",
