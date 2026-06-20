@@ -11,7 +11,7 @@ export async function* generate(message: string, signal?: AbortSignal) {
     parts: [{ type: "text", content: message }],
   };
 
-  for await (const chunk of connect([msg], {})) {
+  for await (const chunk of connect([msg], {}, signal)) {
     if (chunk.type === "CUSTOM" && chunk.name === "structured-output.complete") {
       yield chunk.value.object.code;
       return;
