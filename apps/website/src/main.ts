@@ -1,7 +1,7 @@
 import "./style.css";
 import { tick } from "./store.ts";
 import { renderer, scene, camera, timer } from "./scene.ts";
-import { generate } from "./api.ts";
+import { createClient } from "./api.ts";
 import { run } from "./run.ts";
 
 void renderer.setAnimationLoop((ts: number) => {
@@ -17,8 +17,11 @@ if (!sendBtn) throw new Error("#send not found");
 const stopBtn = document.getElementById("stop") as HTMLButtonElement | null;
 if (!stopBtn) throw new Error("#stop not found");
 
-let ac: AbortController | null = null;
-stopBtn.onclick = () => ac?.abort();
+const client = createClient((code) => {
+  void run(code);
+});
+
+stopBtn.onclick = () => client.stop();
 
 document.getElementById("form")!.onsubmit = async (e) => {
   e.preventDefault();
@@ -26,24 +29,15 @@ document.getElementById("form")!.onsubmit = async (e) => {
   if (!text) return;
   input.value = "";
 
-  ac = new AbortController();
   sendBtn.hidden = true;
   stopBtn.hidden = false;
 
-  let code = "";
   try {
-    for await (const delta of generate(text, ac.signal)) {
-      code += delta;
-    }
+    await client.sendMessage(text);
   } catch (err) {
-    if (ac?.signal.aborted) return;
     console.error(err instanceof Error ? err.message : String(err));
-    return;
   } finally {
-    ac = null;
     sendBtn.hidden = false;
     stopBtn.hidden = true;
   }
-
-  if (code) await run(code);
 };

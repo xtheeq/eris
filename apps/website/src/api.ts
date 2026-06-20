@@ -1,23 +1,17 @@
-import { fetchServerSentEvents } from "@tanstack/ai-client";
-import type { UIMessage } from "@tanstack/ai-client";
+import { ChatClient, fetchServerSentEvents } from "@tanstack/ai-client";
+import type { StructuredOutputPart } from "@tanstack/ai-client";
 
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
-export async function* generate(message: string, signal?: AbortSignal) {
-  const { connect } = fetchServerSentEvents(`${BASE}/agent`);
-  const msg: UIMessage = {
-    id: crypto.randomUUID(),
-    role: "user",
-    parts: [{ type: "text", content: message }],
-  };
-
-  for await (const chunk of connect([msg], {}, signal)) {
-    if (chunk.type === "CUSTOM" && chunk.name === "structured-output.complete") {
-      yield chunk.value.object.code;
-      return;
-    }
-    if (chunk.type === "RUN_ERROR") {
-      throw new Error(chunk.message ?? "AI generation failed");
-    }
-  }
+export function createClient(onCode: (code: string) => void) {
+  return new ChatClient({
+    connection: fetchServerSentEvents(`${BASE}/agent`),
+    onFinish: (message) => {
+      const sop = message.parts.find(
+        (p): p is StructuredOutputPart<{ code: string }> =>
+          p.type === "structured-output" && p.status === "complete",
+      );
+      if (sop?.data?.code) onCode(sop.data.code);
+    },
+  });
 }
