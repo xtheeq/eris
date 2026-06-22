@@ -1,10 +1,12 @@
 import { ChatClient, createChatClientOptions, fetchServerSentEvents } from "@tanstack/ai-client";
+import { tools } from "./tools.ts";
 
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 export function createClient(onCode: (code: string) => void) {
   const options = createChatClientOptions({
     connection: fetchServerSentEvents(`${BASE}/agent`),
+    tools,
     onCustomEvent: (eventType, data) => {
       if (eventType !== "structured-output.complete") return;
       const { code } = (data as { object: { code: string } }).object;

@@ -12,6 +12,7 @@
   "dependencies": {
     "@tanstack/ai": "catalog:",
     "@tanstack/ai-gemini": "catalog:",
+    "agent-tools": "workspace:*",
     "hono": "^4.12.25",
     "zod": "catalog:"
   },

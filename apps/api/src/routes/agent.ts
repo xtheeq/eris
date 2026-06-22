@@ -8,6 +8,7 @@ import {
 } from "@tanstack/ai";
 import { createGeminiChat } from "@tanstack/ai-gemini";
 import { system } from "../prompts/system.ts";
+import { getObjectDef, listObjectsDef } from "agent-tools";
 
 const logger: ChatMiddleware = {
   name: "logger",
@@ -56,6 +57,7 @@ agent.post("/agent", async (c) => {
     runId: params.runId,
     systemPrompts: [system],
     outputSchema: z.object({ code: z.string() }),
+    tools: [getObjectDef, listObjectsDef],
     middleware: [logger],
     abortController,
     stream: true,
